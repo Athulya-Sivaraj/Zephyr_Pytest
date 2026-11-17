@@ -1,0 +1,23 @@
+# Put next to the pnet app (e.g. tests/net/pnet_stress_template/testcase.yaml) to run
+# the suite through Twister:
+#   west twister -T tests/net/pnet_stress_template -p nrf54lm20dk/nrf54lm20a/cpuapp \
+#     --device-testing --device-serial COM25 --pytest-args="--testbed=<path>/testbed.local.yaml -m smoke"
+common:
+  harness: pytest
+  harness_config:
+    pytest_root:
+      - "pytest"
+    pytest_dut_scope: session
+    pytest_args:
+      - "-m"
+      - "not soak and not disruptive"
+  tags: net wifi pnet
+tests:
+  net.pnet.smoke:
+    harness_config:
+      pytest_dut_scope: session
+      pytest_root: ["pytest/tests/test_01_bringup.py"]
+  net.pnet.functional:
+    harness_config:
+      pytest_dut_scope: session
+      pytest_root: ["pytest"]

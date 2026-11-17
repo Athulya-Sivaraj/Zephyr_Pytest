@@ -1,0 +1,20 @@
+# Known firmware failures -> tests run as strict xfail.
+# When the firmware is fixed the test XPASSes and the run fails, telling you to
+# delete the entry. Keys are scope ids, optionally with a parametrize id: ID[param].
+#   reason: shown in the report
+#   strict: false   -> don't fail the run on XPASS (flaky issues)
+#   run: false      -> don't even execute (crashes/hangs the board)
+firmware: 0.4.5.x
+issues:
+  PS-002: "pnet psr reports 'Wifi power save configs setup failed'"
+  PS-003[10]: "pnet ps_li 10 reports 'WIFI_PS_PARAM_LISTEN_INTERVAL failed'"
+  PS-013: "test_ps_toggle reports 'Failed to program PS defaults'"
+  RUN-001[TC-005]: "TC-005 result=FAIL, last_err=-5"
+  RUN-001[TC-010]: "'Failed to program PS defaults'"
+  DNS-008:
+    reason: "DNS fails after DPM (TC-020); affected mode not yet isolated"
+    strict: false
+  NEG-003: "TC-021 invalid tcp_connect arguments failed on v0.4.5.4"
+  TCP-007[2000-5-long]:
+    reason: "test_tcp_loop 2000 x 5 ms with long payload fails"
+    strict: false

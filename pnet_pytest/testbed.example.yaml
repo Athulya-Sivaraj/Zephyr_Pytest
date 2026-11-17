@@ -1,0 +1,53 @@
+# Copy to testbed.local.yaml (keep it out of git) and pass with --testbed testbed.local.yaml.
+# Any value can also be overridden on the command line (--wifi-ssid, --peer-ip, ...)
+# or by env (PNET_SSID, PNET_PSK, PNET_SERVER_IP, ...). Prefer env for the PSK.
+name: nrf54lm20-ra6w2-bench1
+expected_fw_version: ''          # e.g. '0.4.5.4' - checked by BU-003 when set
+shell_timeout_s: 60
+
+wifi:
+  ssid: ''
+  psk: ''                        # better: set PNET_PSK
+  bssid: ''                      # aa:bb:cc:dd:ee:ff, enables connect_bssid tests
+  open_ssid: ''
+  open_bssid: ''
+  connect_timeout_s: 90
+  post_connect_delay_s: 10
+
+peer:
+  mode: local                    # local = suite runs the echo servers on this PC
+  ip: ''                         # empty = auto-detect this PC's LAN IP
+  bind: 0.0.0.0
+  tcp_base_port: 10001           # socket id N -> 10001 + N
+  udp_base_port: 10101
+  max_sockets: 4
+
+dns:
+  host: example.com
+  extra_hosts: [google.com, yahoo.com]
+
+mqtt:
+  host: ''                       # e.g. this PC running mosquitto
+  port: 1883
+  tls_port: 0                    # 8883 once pnet mqtt_connect supports TLS
+  topic_prefix: pnet/pytest
+  client_id: pnet-pytest
+  verify_with_host_client: true  # needs paho-mqtt
+
+perf:
+  iperf_path: ''                 # iperf 2 (not iperf3), e.g. C:/tools/iperf-2.1.9/iperf.exe
+  udp_port: 5001
+  tcp_port: 5001
+  duration_s: 10
+  min_udp_kbps: 0
+  min_tcp_kbps: 0
+
+ps:
+  listen_intervals: [1, 3, 10]
+  idle_before_wake_s: 10
+
+# Lab equipment present on this bench: ap_control, ppk2, ncp_reset
+capabilities: []
+
+soak_duration_s: 300
+stress_cycles: 200
