@@ -1,7 +1,7 @@
 """BU - Smoke & bring-up."""
 import pytest
 
-from pnet_lib.client import Pnet, PnetCommandError
+from pnet_lib.client import Pnet
 
 pytestmark = pytest.mark.smoke
 
@@ -41,6 +41,29 @@ def test_repeated_init(initialized: Pnet):
     initialized.sh.check_fatal()
     initialized.fw_version()
     assert res.text is not None
+
+
+@pytest.mark.negative
+@pytest.mark.scope_id('BU-005')
+def test_commands_before_init(pnet: Pnet):
+    pnet.reset()
+    commands = (
+        ('pnet connect BU-005-test', 'Connect request failed with ', 'Connect request sent'),
+        ('pnet resolve example.com sync', 'DNS failed to resolve ', 'A: '),
+        ('pnet tcp_connect 192.0.2.1 10001', 'Failed to connect socket', 'TCP connect successful'),
+        ('pnet ps 1', 'WIFI_PS_PARAM_STATE failed', 'Done'),
+    )
+    failures = []
+    for command, error, success in commands:
+        # Returning from run() requires the shell to answer its next UART marker.
+        res = pnet.run(command)
+        pnet.sh.check_fatal()
+        if not res.has(error) or any(line.strip().startswith(success) for line in res.lines):
+            failures.append(f'Expected {error!r} and no {success!r}:\n{res}')
+
+    pnet.init()
+    assert pnet.fw_version()['firmware'], 'Wi-Fi firmware version missing after init'
+    assert not failures, '\n'.join(failures)
 
 
 @pytest.mark.scope_id('BU-008')
