@@ -89,10 +89,15 @@ def _available(cfg: TestbedConfig) -> dict[str, str]:
     paho = importlib.util.find_spec('paho') is not None
     return {
         'wifi': '' if cfg.wifi.ssid else 'set wifi.ssid / --wifi-ssid',
+        'secured_wifi': '' if cfg.wifi.ssid and cfg.wifi.psk else 'set wifi.ssid and wifi.psk',
+        'secondary_wifi': ('' if cfg.wifi.secondary.ssid and cfg.wifi.secondary.psk
+                           else 'set wifi.secondary.ssid and wifi.secondary.psk'),
+        'secondary_bssid': '' if cfg.wifi.secondary.bssid else 'set wifi.secondary.bssid',
         'tcp_peer': '' if cfg.peer.ip else 'no peer IP',
         'local_peer': '' if cfg.peer.mode == 'local' else 'needs peer.mode=local (server-side control)',
         'bssid': '' if cfg.wifi.bssid else 'set wifi.bssid / --wifi-bssid',
         'open_network': '' if cfg.wifi.open_ssid else 'set wifi.open_ssid',
+        'open_bssid': '' if cfg.wifi.open_bssid else 'set wifi.open_bssid',
         'mqtt': '' if cfg.mqtt.host else 'set mqtt.host / --mqtt-host',
         'mqtt_tls': '' if cfg.mqtt.host and cfg.mqtt.tls_port else 'set mqtt.tls_port',
         'host_mqtt': '' if paho and cfg.mqtt.verify_with_host_client else 'pip install paho-mqtt',

@@ -92,7 +92,60 @@ Common selections:
 | Stress / soak | `-m stress --stress-cycles=1000`, `-m soak --soak-duration-s=86400` |
 | Report | `--junitxml=results.xml` (metrics + scope_id in properties) |
 
-Don't pass `-p twister_harness.plugin`; it autoloads (same note as the old handbook).
+For direct `python -m pytest` runs with plugin autoload enabled, don't add
+`-p twister_harness.plugin`; pytest already loads it from its package entry point.
+
+### Running Wi-Fi tests with multiple APs (PowerShell)
+
+From `zephyr_wifi_examples\pnet_shell\pnet_pytest`, copy
+[`testbed.example.yaml`](./testbed.example.yaml) to `testbed.mercusys.local.yaml` beside
+[`run-wifi.ps1`](./run-wifi.ps1). Edit your copy, not the example. The filename is the
+runner default even for non-Mercusys APs. For a different bench name, save it as
+`testbed.<bench>.local.yaml` and pass it with `-Testbed`. Do not commit the local file.
+
+```powershell
+Copy-Item .\testbed.example.yaml .\testbed.mercusys.local.yaml
+```
+
+Fill in these settings before running:
+
+| YAML fields | What to enter |
+| --- | --- |
+| `name` | A label for your bench, shown in the pytest header. |
+| `wifi.ssid`, `wifi.psk`, `wifi.bssid` | The exact, case-sensitive primary secured SSID, quoted passphrase, and radio BSSID. The BSSID is needed for the primary WIFI-003 case. |
+| `wifi.secondary.ssid`, `wifi.secondary.psk`, `wifi.secondary.bssid` | A second secured network (e.g. 5 GHz). Leave it blank if unavailable. The BSSID is needed for the secondary WIFI-003 case; WIFI-005 needs an eight-byte passphrase for this profile. |
+| `wifi.open_ssid`, `wifi.open_bssid` | A genuinely open network; no password. WIFI-004 requires both values. |
+| `dns.host` | An IPv4 hostname resolvable from the APs tested for DNS; defaults to `example.com`. |
+| `peer.ip` | Only needed for TCP/UDP/throughput tests when automatic detection is unsuitable. Use the PC IPv4 reachable by the DUT. |
+
+Use the AP radio's BSSID in `aa:bb:cc:dd:ee:ff` format, not the DUT's MAC. Then run:
+
+```powershell
+.\run-wifi.ps1 -CollectOnly
+.\run-wifi.ps1 -SerialPort COM25
+.\run-wifi.ps1 -SerialPort COM25 -Filter test_connect_configured_ap
+```
+
+Replace `COM25` with the DUT shell port. The script uses the workspace's `.venv-zephyr`
+and `zephyr_wifi_examples\build`. It explicitly loads the Twister plugin, so it also
+works when pytest plugin autoload is disabled. Use `-Testbed` to select a different YAML file.
+
+No credential environment variables are needed if the PSKs are in the private YAML.
+To keep PSKs out of YAML instead, set `PNET_PSK` for the primary and `PNET_SECONDARY_PSK`
+for the secondary. Existing `PNET_SSID`, `PNET_PSK`, and `PNET_BSSID` still override the
+primary YAML fields, so clear old values when switching to the YAML:
+
+```powershell
+Remove-Item Env:PNET_SSID, Env:PNET_PSK, Env:PNET_BSSID, Env:PNET_SECONDARY_PSK -ErrorAction SilentlyContinue
+```
+
+For direct pytest runs, also pass `--testbed=.\testbed.mercusys.local.yaml` from this
+directory (or use an absolute path). Alternate-profile tests tear down their link
+before the next test.
+
+WIFI-002 checks association and IP for the configured profiles, not negotiated security.
+WIFI-005 covers only the eight-byte PSK case here. Channel/bandwidth validation, a second AP
+vendor, DHCP renewal evidence, AP event control, and RF attenuation still need separate setup.
 
 ## Skips: `requires(...)`
 
@@ -142,7 +195,7 @@ firmware version query. It needs no AP or peer server.
 
 ## Not implemented yet (by scope id)
 
-Need lab equipment / fixtures: WIFI-002/005/007/008/010/011/012/013/016, DNS-010, REC-001/002/005/006/007,
+Need lab equipment / fixtures: WIFI-007/008/010/011/012/013/016, DNS-010, REC-001/002/005/006/007,
 SOAK-002, PWR-001..004, BU-007.
 Need firmware support: MQTT-002/003/004/011, PS-014/015, CONC-002/003/007.
 Straightforward next additions: DNS-004, TCP-005/012/013, SOCK-008/009/011, UDP-004/005,

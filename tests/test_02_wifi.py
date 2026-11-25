@@ -16,6 +16,16 @@ def _fresh_link(pnet: Pnet) -> None:
         pnet.iface_up()
 
 
+@pytest.fixture
+def isolated_link(initialized: Pnet):
+    _fresh_link(initialized)
+    yield initialized
+    # Even a failed connect may have started association. Don't leave an
+    # alternate AP connected for fixtures that assume the primary AP.
+    if initialized.sh.synchronized and not initialized.state.iface_down:
+        initialized.iface_down()
+
+
 @pytest.mark.scope_id('WIFI-001')
 @pytest.mark.requires('wifi')
 def test_connect_wpa2(initialized: Pnet, testbed, record_property):
@@ -38,16 +48,25 @@ def test_connect_bssid_secured(initialized: Pnet, testbed):
     initialized.ps(1)
 
 
+@pytest.mark.scope_id('WIFI-003')
+@pytest.mark.requires('secondary_wifi', 'secondary_bssid')
+def test_connect_bssid_secondary(isolated_link: Pnet, testbed):
+    wifi = testbed.wifi
+    ap = wifi.secondary
+    isolated_link.connect(ap.ssid, ap.psk, bssid=ap.bssid,
+                          timeout=wifi.connect_timeout_s,
+                          post_connect_delay_s=wifi.post_connect_delay_s)
+    assert isolated_link.resolve(testbed.dns.host, 'sync')
+
+
 @pytest.mark.scope_id('WIFI-004')
-@pytest.mark.requires('open_network')
-def test_connect_bssid_open(initialized: Pnet, testbed):
-    _fresh_link(initialized)
-    initialized.connect(testbed.wifi.open_ssid, bssid=testbed.wifi.open_bssid,
-                        timeout=testbed.wifi.connect_timeout_s,
-                        post_connect_delay_s=testbed.wifi.post_connect_delay_s)
-    assert initialized.resolve(testbed.dns.host, 'sync')
-    initialized.state.connected = False        # next test must reconnect to the main AP
-    initialized.iface_down()
+@pytest.mark.requires('open_network', 'open_bssid')
+def test_connect_bssid_open(isolated_link: Pnet, testbed):
+    wifi = testbed.wifi
+    isolated_link.connect(wifi.open_ssid, bssid=wifi.open_bssid,
+                          timeout=wifi.connect_timeout_s,
+                          post_connect_delay_s=wifi.post_connect_delay_s)
+    assert isolated_link.resolve(testbed.dns.host, 'sync')
 
 
 @pytest.mark.scope_id('WIFI-006')
@@ -92,6 +111,32 @@ def test_nonexistent_ssid_then_correct(initialized: Pnet, testbed):
     assert initialized.responsive()
     _fresh_link(initialized)
     initialized.connect(testbed.wifi.ssid, testbed.wifi.psk, timeout=testbed.wifi.connect_timeout_s)
+
+
+@pytest.mark.scope_id('WIFI-002')
+@pytest.mark.parametrize('profile', [
+    pytest.param('primary', marks=pytest.mark.requires('secured_wifi')),
+    pytest.param('secondary', marks=pytest.mark.requires('secondary_wifi')),
+    pytest.param('open', marks=pytest.mark.requires('open_network')),
+])
+def test_connect_configured_ap(isolated_link: Pnet, testbed, profile):
+    wifi = testbed.wifi
+    ssid, psk = {
+        'primary': (wifi.ssid, wifi.psk),
+        'secondary': (wifi.secondary.ssid, wifi.secondary.psk),
+        'open': (wifi.open_ssid, ''),
+    }[profile]
+    isolated_link.connect(ssid, psk, timeout=wifi.connect_timeout_s)
+
+
+@pytest.mark.scope_id('WIFI-005')
+@pytest.mark.requires('secondary_wifi')
+def test_connect_minimum_length_psk(isolated_link: Pnet, testbed):
+    wifi = testbed.wifi
+    ap = wifi.secondary
+    if len(ap.psk.encode('utf-8')) != 8:
+        pytest.skip('WIFI-005 minimum-length case needs an 8-byte PSK on wifi.secondary')
+    isolated_link.connect(ap.ssid, ap.psk, timeout=wifi.connect_timeout_s)
 
 
 # WIFI-011 AP reboot, WIFI-012 blacklist, WIFI-013 deauth -> need an `ap` fixture
