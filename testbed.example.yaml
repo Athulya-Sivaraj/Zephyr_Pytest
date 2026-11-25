@@ -1,6 +1,5 @@
 # Copy to testbed.local.yaml (keep it out of git) and pass with --testbed testbed.local.yaml.
-# Any value can also be overridden on the command line (--wifi-ssid, --peer-ip, ...)
-# or by env (PNET_SSID, PNET_PSK, PNET_SERVER_IP, ...). Prefer env for the PSK.
+# Listed CLI/env overrides take precedence over YAML (e.g. PNET_SSID, PNET_PSK, PNET_SERVER_IP).
 name: nrf54lm20-ra6w2-bench1
 expected_fw_version: ''          # e.g. '0.4.5.4' - checked by BU-003 when set
 shell_timeout_s: 60
@@ -11,6 +10,10 @@ wifi:
   bssid: ''                      # aa:bb:cc:dd:ee:ff, enables connect_bssid tests
   open_ssid: ''
   open_bssid: ''
+  secondary:                     # optional additional secured AP for WIFI-002/003/005
+    ssid: ''
+    psk: ''                      # or set PNET_SECONDARY_PSK
+    bssid: ''                    # required for the secondary BSSID case
   connect_timeout_s: 90
   post_connect_delay_s: 10
 

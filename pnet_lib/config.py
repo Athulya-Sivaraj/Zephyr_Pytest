@@ -17,12 +17,20 @@ import yaml
 
 
 @dataclass
+class SecuredApConfig:
+    ssid: str = ''
+    psk: str = field(default='', repr=False)
+    bssid: str = ''
+
+
+@dataclass
 class WifiConfig:
     ssid: str = ''
-    psk: str = ''
+    psk: str = field(default='', repr=False)
     bssid: str = ''
     open_ssid: str = ''
     open_bssid: str = ''
+    secondary: SecuredApConfig = field(default_factory=SecuredApConfig)
     connect_timeout_s: float = 90.0
     # Settle time after "IP configuration applied". Kept configurable because the
     # firmware currently needs it; drop to 0 once a "link ready" event exists.
@@ -110,6 +118,7 @@ OVERRIDES = {
     'wifi-ssid': ('wifi.ssid', 'PNET_SSID', str),
     'wifi-psk': ('wifi.psk', 'PNET_PSK', str),
     'wifi-bssid': ('wifi.bssid', 'PNET_BSSID', str),
+    'wifi-secondary-psk': ('wifi.secondary.psk', 'PNET_SECONDARY_PSK', str),
     'peer-ip': ('peer.ip', 'PNET_SERVER_IP', str),
     'peer-port': ('peer.tcp_base_port', 'PNET_TCP_PORT', int),
     'peer-mode': ('peer.mode', 'PNET_PEER_MODE', str),
