@@ -136,11 +136,15 @@ Anything you open via `Pnet` is closed automatically after the test.
   - that `DeviceAdapter.readlines()` exists in your twister_harness version (it falls back to
     `clear_buffer()` if not, losing fatal-scan between commands)
 
+BU-005 is covered by `tests/test_01_bringup.py`. It deliberately reboots the DUT, checks explicit
+pre-init errors for connect, sync DNS, TCP connect, and power save, then verifies init and a
+firmware version query. It needs no AP or peer server.
+
 ## Not implemented yet (by scope id)
 
 Need lab equipment / fixtures: WIFI-002/005/007/008/010/011/012/013/016, DNS-010, REC-001/002/005/006/007,
 SOAK-002, PWR-001..004, BU-007.
 Need firmware support: MQTT-002/003/004/011, PS-014/015, CONC-002/003/007.
-Straightforward next additions: BU-005, DNS-004, TCP-005/012/013, SOCK-008/009/011, UDP-004/005,
+Straightforward next additions: DNS-004, TCP-005/012/013, SOCK-008/009/011, UDP-004/005,
 MQTT-006/008/012/016/019, PS-004/012, PERF-002/006, STR-002/006..009, SOAK-003..005, RUN-003,
 CONC-004/005 (separate multi_threaded_app image).
