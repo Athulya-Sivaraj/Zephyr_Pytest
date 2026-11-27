@@ -27,6 +27,8 @@ from pnet_lib.config import OVERRIDES, TestbedConfig, load_config
 from pnet_lib.servers import PeerPool
 from pnet_lib.shell import FatalLogError, PnetShell, SyncLostError
 
+pytest_plugins = ("pnet_lib.run_artifacts",)
+
 logger = logging.getLogger(__name__)
 HERE = Path(__file__).parent
 SHELL_KEY = pytest.StashKey[PnetShell]()

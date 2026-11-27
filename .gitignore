@@ -3,3 +3,4 @@ __pycache__/
 .pytest_cache/
 /testbed.local.yaml
 /testbed.*.local.yaml
+/logs/
